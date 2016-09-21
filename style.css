@@ -1,0 +1,36 @@
+label{
+  margin-top: 150px;
+  display: block;
+}
+
+.popover {
+  position: fixed;
+  z-index: 1;
+  background: #555;
+  color: #fff;
+  box-sizing: border-box;
+  padding: 5px;
+  text-transform: none;
+  width: 400px;
+  /*opacity: 0;
+  visibility: hidden;*/
+  transition: var(--transition-base);
+  font-size: var(--size-small);
+}
+
+label:hover .popover,
+label:focus .popover,
+label:active .popover{
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (max-width: 768px){
+  .popover{
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - calc(var(--space-base)*2));
+    text-align: center;
+  }
+}

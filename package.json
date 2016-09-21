@@ -1,0 +1,20 @@
+{
+  "name": "vanilla-popover",
+  "version": "0.0.1",
+  "scripts": {
+    "js": "browserify index.js -o dist/popover.js -s vanillaPopover",
+    "watch": "npm-watch",
+    "lint": "standard index.js"
+  },
+  "watch": {
+    "js": "popover.js"
+  },
+  "dependencies": {
+    "bloody-offset": "0.0.0"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "npm-watch": "^0.1.6",
+    "standard": "^8.1.0"
+  }
+}

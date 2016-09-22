@@ -1,0 +1,63 @@
+.vanilla-popover {
+    box-sizing: border-box;
+    position: fixed;
+    max-width: none;
+    width: 200px;
+    height: 100px;
+    overflow: auto;
+    padding: 10px;
+    border: 1px solid lightgray;
+    border-radius: 2px;
+}
+
+.vanilla-popover img {
+    display: block;
+    margin: 10px auto;
+    max-width: 100%;
+}
+
+.vanilla-popover.basic-before {
+    visibility: hidden;
+}
+
+.vanilla-popover.basic-after {
+  visibility: visible;
+}
+
+.vanilla-popover.fade-before {
+  opacity: 0;
+  visibility: hidden;
+  transition: visibility 0s, all 0.4s;
+}
+
+.vanilla-popover.fade-after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.row {
+    position: fixed;
+    width: 300px;
+}
+
+.top-left {
+    top: 30px;
+    left: 30px;
+}
+
+.top-right {
+    top: 30px;
+    right: 30px;
+    text-align: right;
+}
+
+.bottom-left {
+    bottom: 30px;
+    left: 30px;
+}
+
+.bottom-right {
+    bottom: 30px;
+    right: 30px;
+    text-align: right;
+}

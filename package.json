@@ -2,19 +2,22 @@
   "name": "vanilla-popover",
   "version": "0.0.1",
   "scripts": {
-    "js": "browserify index.js -o dist/popover.js -s vanillaPopover",
+    "js": "browserify index.js -o dist/popover.js -s VanillaPopover",
     "watch": "npm-watch",
-    "lint": "standard index.js"
+    "lint": "standard index.js --verbose | snazzy || exit 0"
   },
   "watch": {
-    "js": "popover.js"
+    "js": "index.js"
   },
   "dependencies": {
-    "bloody-offset": "0.0.0"
+    "bloody-offset": "0.0.0",
+    "lodash": "^4.16.1",
+    "small-supplant": "0.0.4"
   },
   "devDependencies": {
     "browserify": "^13.1.0",
     "npm-watch": "^0.1.6",
+    "snazzy": "^5.0.0",
     "standard": "^8.1.0"
   }
 }

@@ -99,7 +99,15 @@ fn.addEvents = function () {
     self.show()
   })
 
+  this.popover.addEventListener('mouseover', function () {
+    self.show()
+  })
+
   this.container.addEventListener('mouseout', function () {
+    self.hide()
+  })
+
+  this.popover.addEventListener('mouseout', function () {
     self.hide()
   })
 

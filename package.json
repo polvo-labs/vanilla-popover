@@ -4,6 +4,7 @@
   "scripts": {
     "js": "browserify index.js -o dist/popover.js -s VanillaPopover",
     "watch": "npm-watch",
+    "js:minify": "uglifyjs dist/popover.js -c -o dist/popover.min.js",
     "lint": "standard index.js --verbose | snazzy || exit 0"
   },
   "watch": {
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "bloody-offset": "0.0.0",
+    "insert-after": "^0.1.3",
     "lodash": "^4.16.1",
     "small-supplant": "0.0.4"
   },
@@ -18,6 +20,7 @@
     "browserify": "^13.1.0",
     "npm-watch": "^0.1.6",
     "snazzy": "^5.0.0",
-    "standard": "^8.1.0"
+    "standard": "^8.1.0",
+    "uglify-js": "^2.7.3"
   }
 }

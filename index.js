@@ -2,6 +2,7 @@ var offset = require('bloody-offset')
 var assign = require('lodash/assign')
 var isElement = require('lodash/isElement')
 var supplant = require('small-supplant')
+var insertAfter = require('insert-after')
 
 supplant.delimiters = ['{', '}']
 
@@ -11,7 +12,10 @@ Popover.defaults = {
   customClass: 'vanilla-popover',
   content: '',
   template: '<div class="{customClass} {effect}-before">{content}</div>',
-  effect: 'basic'
+  effect: 'basic',
+  triangle: true,
+  triangleOffset: 15,
+  triangleColor: '#000'
 }
 
 function Popover (container, options) {
@@ -26,8 +30,13 @@ function Popover (container, options) {
   this.options = assign({}, Popover.defaults, options)
   this.container = this.getElement(container)
   this.options.content = this.getContent()
+
   this.createPopover()
-  this.setPosition()
+  this.createTriangle()
+
+  this.setPopoverPosition()
+  this.setTrianglePosition()
+
   this.addEvents()
 }
 
@@ -48,22 +57,31 @@ fn.createPopover = function () {
   div.innerHTML = supplant(this.options.template, this.options)
   this.popover = div.children[0]
   document.body.appendChild(this.popover)
+
   this.popoverWidth = window.getComputedStyle(this.popover).width
   this.popoverHeight = window.getComputedStyle(this.popover).height
   this.popoverWidth = parseInt(this.popoverWidth)
   this.popoverHeight = parseInt(this.popoverHeight)
 }
 
-fn.calculatePosition = function () {
-  var containerOffset = offset(this.container)
-  var popoverOffset = offset(this.popover)
+fn.createTriangle = function () {
+  if (!this.options.triangle) return
+  var span = document.createElement('span')
+  this.triangle = span
+  this.triangle.classList.add('vanilla-popover-triangle')
+  insertAfter(this.triangle, this.popover)
+}
 
-  this.targetTop = containerOffset.top
-  this.targetLeft = containerOffset.left
-  this.targetRight = (containerOffset.left + containerOffset.width) - this.popoverWidth
+fn.calculatePopoverPosition = function () {
+  this.containerOffset = offset(this.container)
+  this.popoverOffset = offset(this.popover)
 
-  this.positionateOnTop = this.targetTop - popoverOffset.height
-  this.positionateOnBottom = this.targetTop + containerOffset.height
+  this.targetTop = this.containerOffset.top
+
+  this.placeOnTop = this.targetTop - this.popoverOffset.height
+  this.placeOnRight = (this.containerOffset.left + this.containerOffset.width) - this.popoverWidth
+  this.placeOnBottom = this.targetTop + this.containerOffset.height
+  this.placeOnLeft = this.containerOffset.left
 }
 
 fn.getAxis = function () {
@@ -73,26 +91,67 @@ fn.getAxis = function () {
   }
 }
 
-fn.setPosition = function () {
+fn.setPopoverPosition = function () {
   var axis = this.getAxis()
 
-  this.calculatePosition()
+  this.calculatePopoverPosition()
 
-  if (this.targetLeft < axis.x) {
-    this.popover.style.left = this.targetLeft + 'px'
+  if (this.placeOnLeft < axis.x) {
+    this.popover.style.left = this.placeOnLeft + 'px'
   } else {
-    this.popover.style.left = this.targetRight + 'px'
+    this.popover.style.left = this.placeOnRight + 'px'
   }
 
   if (axis.y > this.targetTop) {
-    this.popover.style.top = this.positionateOnBottom + 'px'
+    this.popover.style.top = this.placeOnBottom + 'px'
   } else {
-    this.popover.style.top = this.positionateOnTop + 'px'
+    this.popover.style.top = this.placeOnTop + 'px'
+  }
+}
+
+fn.setTrianglePosition = function () {
+  if (!this.options.triangle) return
+
+  var chosenSpace = this.options.triangleOffset
+  var axis = this.getAxis()
+  this.calculatePopoverPosition()
+
+  this.borderHeight = window.getComputedStyle(this.triangle).borderTopWidth
+  this.borderWidth = this.borderHeight = parseInt(this.borderHeight)
+
+  if (this.placeOnLeft < axis.x) {
+    this.triangle.style.left = this.placeOnLeft + chosenSpace + 'px'
+  } else {
+    this.triangle.style.left = ((this.placeOnLeft + this.containerOffset.width) - (this.borderWidth * 2) - chosenSpace) + 'px'
+  }
+
+  if (axis.y > this.targetTop) {
+    this.triangle.style.borderTopColor = 'transparent'
+    this.triangle.style.borderBottomColor = this.options.triangleColor
+
+    this.trianglePosition = this.placeOnBottom - this.borderHeight
+
+    this.triangle.style.top = this.trianglePosition + 'px'
+    this.popover.style.top = this.placeOnBottom + this.borderHeight + 'px'
+  } else {
+    this.triangle.style.borderBottomColor = 'transparent'
+    this.triangle.style.borderTopColor = this.options.triangleColor
+
+    this.trianglePosition = this.placeOnTop - this.borderHeight
+
+    this.triangle.style.top = this.trianglePosition + this.popoverOffset.height + 'px'
+    this.popover.style.top = this.placeOnTop - this.borderHeight + 'px'
   }
 }
 
 fn.addEvents = function () {
   var self = this
+
+  if (this.triangle) {
+    this.triangle.addEventListener('mouseover', function () {
+      self.show()
+    })
+  }
 
   this.container.addEventListener('mouseover', function () {
     self.show()
@@ -102,6 +161,12 @@ fn.addEvents = function () {
     self.show()
   })
 
+  if (this.triangle) {
+    this.triangle.addEventListener('mouseout', function () {
+      self.hide()
+    })
+  }
+
   this.container.addEventListener('mouseout', function () {
     self.hide()
   })
@@ -110,8 +175,10 @@ fn.addEvents = function () {
     self.hide()
   })
 
-  window.addEventListener('resize', this.setPosition.bind(this))
-  window.addEventListener('scroll', this.setPosition.bind(this))
+  window.addEventListener('resize', this.setPopoverPosition.bind(this))
+  window.addEventListener('resize', this.setTrianglePosition.bind(this))
+  window.addEventListener('scroll', this.setPopoverPosition.bind(this))
+  window.addEventListener('scroll', this.setTrianglePosition.bind(this))
 }
 
 fn.show = function () {

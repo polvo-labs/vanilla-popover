@@ -1,26 +1,76 @@
+/* Examples */
+
+.row {
+  position: fixed;
+  width: 300px;
+}
+
+.top-left {
+  top: 30px;
+  left: 30px;
+}
+
+.top-right {
+  top: 30px;
+  right: 30px;
+  text-align: right;
+}
+
+.bottom-left {
+  bottom: 30px;
+  left: 30px;
+}
+
+.bottom-right {
+  bottom: 30px;
+  right: 30px;
+  text-align: right;
+}
+
+/* Needed to work */
+
 .vanilla-popover {
-    box-sizing: border-box;
-    position: fixed;
-    max-width: none;
-    width: 200px;
-    height: 100px;
-    overflow: auto;
-    padding: 10px;
-    border: 1px solid lightgray;
-    border-radius: 2px;
+  box-sizing: border-box;
+  position: fixed;
+  max-width: none;
+  width: 200px;
+  height: 100px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid lightgray;
+  border-radius: 2px;
+  background: #fff;
 }
 
 .vanilla-popover img {
-    display: block;
-    margin: 10px auto;
-    max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  max-width: 100%;
 }
 
-.vanilla-popover.basic-before {
-    visibility: hidden;
+.vanilla-popover-triangle{
+  position: fixed;
+  height: 0;
+  width: 0;
+  display: block;
+  border-top-width: 10px;
+  border-right-width: 10px;
+  border-bottom-width: 10px;
+  border-left-width: 10px;
+  border-style: solid;
+  border-right-color: transparent;
+  border-left-color: transparent;
 }
 
-.vanilla-popover.basic-after {
+/* Animations */
+
+.vanilla-popover.basic-before,
+.vanilla-popover.basic-before + .vanilla-popover-triangle {
+  visibility: hidden;
+}
+
+.vanilla-popover.basic-after,
+.vanilla-popover.basic-after + .vanilla-popover-triangle {
   visibility: visible;
 }
 
@@ -33,31 +83,4 @@
 .vanilla-popover.fade-after {
   opacity: 1;
   visibility: visible;
-}
-
-.row {
-    position: fixed;
-    width: 300px;
-}
-
-.top-left {
-    top: 30px;
-    left: 30px;
-}
-
-.top-right {
-    top: 30px;
-    right: 30px;
-    text-align: right;
-}
-
-.bottom-left {
-    bottom: 30px;
-    left: 30px;
-}
-
-.bottom-right {
-    bottom: 30px;
-    right: 30px;
-    text-align: right;
 }

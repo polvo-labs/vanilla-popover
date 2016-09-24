@@ -3,6 +3,7 @@ var offset = require('bloody-offset')
 var assign = require('lodash/assign')
 var isElement = require('lodash/isElement')
 var supplant = require('small-supplant')
+var insertAfter = require('insert-after')
 
 supplant.delimiters = ['{', '}']
 
@@ -12,7 +13,10 @@ Popover.defaults = {
   customClass: 'vanilla-popover',
   content: '',
   template: '<div class="{customClass} {effect}-before">{content}</div>',
-  effect: 'basic'
+  effect: 'basic',
+  triangle: true,
+  triangleOffset: 15,
+  triangleColor: '#000'
 }
 
 function Popover (container, options) {
@@ -27,8 +31,13 @@ function Popover (container, options) {
   this.options = assign({}, Popover.defaults, options)
   this.container = this.getElement(container)
   this.options.content = this.getContent()
+
   this.createPopover()
-  this.setPosition()
+  this.createTriangle()
+
+  this.setPopoverPosition()
+  this.setTrianglePosition()
+
   this.addEvents()
 }
 
@@ -49,22 +58,31 @@ fn.createPopover = function () {
   div.innerHTML = supplant(this.options.template, this.options)
   this.popover = div.children[0]
   document.body.appendChild(this.popover)
+
   this.popoverWidth = window.getComputedStyle(this.popover).width
   this.popoverHeight = window.getComputedStyle(this.popover).height
   this.popoverWidth = parseInt(this.popoverWidth)
   this.popoverHeight = parseInt(this.popoverHeight)
 }
 
-fn.calculatePosition = function () {
-  var containerOffset = offset(this.container)
-  var popoverOffset = offset(this.popover)
+fn.createTriangle = function () {
+  if (!this.options.triangle) return
+  var span = document.createElement('span')
+  this.triangle = span
+  this.triangle.classList.add('vanilla-popover-triangle')
+  insertAfter(this.triangle, this.popover)
+}
 
-  this.targetTop = containerOffset.top
-  this.targetLeft = containerOffset.left
-  this.targetRight = (containerOffset.left + containerOffset.width) - this.popoverWidth
+fn.calculatePopoverPosition = function () {
+  this.containerOffset = offset(this.container)
+  this.popoverOffset = offset(this.popover)
 
-  this.positionateOnTop = this.targetTop - popoverOffset.height
-  this.positionateOnBottom = this.targetTop + containerOffset.height
+  this.targetTop = this.containerOffset.top
+
+  this.placeOnTop = this.targetTop - this.popoverOffset.height
+  this.placeOnRight = (this.containerOffset.left + this.containerOffset.width) - this.popoverWidth
+  this.placeOnBottom = this.targetTop + this.containerOffset.height
+  this.placeOnLeft = this.containerOffset.left
 }
 
 fn.getAxis = function () {
@@ -74,26 +92,69 @@ fn.getAxis = function () {
   }
 }
 
-fn.setPosition = function () {
+fn.setPopoverPosition = function () {
   var axis = this.getAxis()
 
-  this.calculatePosition()
+  this.calculatePopoverPosition()
 
-  if (this.targetLeft < axis.x) {
-    this.popover.style.left = this.targetLeft + 'px'
+  if (this.placeOnLeft < axis.x) {
+    this.popover.style.left = this.placeOnLeft + 'px'
   } else {
-    this.popover.style.left = this.targetRight + 'px'
+    this.popover.style.left = this.placeOnRight + 'px'
   }
 
   if (axis.y > this.targetTop) {
-    this.popover.style.top = this.positionateOnBottom + 'px'
+    this.popover.style.top = this.placeOnBottom + 'px'
   } else {
-    this.popover.style.top = this.positionateOnTop + 'px'
+    this.popover.style.top = this.placeOnTop + 'px'
+  }
+}
+
+fn.setTrianglePosition = function () {
+  if(!this.options.triangle) return
+
+  var chosenSpace = this.options.triangleOffset
+  var axis = this.getAxis()
+  this.calculatePopoverPosition()
+
+  this.borderHeight = window.getComputedStyle(this.triangle).borderTopWidth
+  this.borderWidth = this.borderHeight = parseInt(this.borderHeight)
+
+  if (this.placeOnLeft < axis.x) {
+    this.triangle.style.left = this.placeOnLeft + chosenSpace + 'px'
+  } else {
+    this.triangle.style.left = ((this.placeOnLeft + this.containerOffset.width) - (this.borderWidth * 2) - chosenSpace) + 'px'
+  }
+
+  if (axis.y > this.targetTop) {
+    this.triangle.style.borderTopColor = 'transparent'
+    this.triangle.style.borderBottomColor = this.options.triangleColor
+
+    this.trianglePosition = this.placeOnBottom - this.borderHeight
+
+    this.triangle.style.top = this.trianglePosition + 'px'
+    this.popover.style.top = this.placeOnBottom + this.borderHeight + 'px'
+
+  } else {
+    this.triangle.style.borderBottomColor = 'transparent'
+    this.triangle.style.borderTopColor = this.options.triangleColor
+
+    this.trianglePosition = this.placeOnTop - this.borderHeight
+
+    this.triangle.style.top = this.trianglePosition + this.popoverOffset.height + 'px'
+    this.popover.style.top = this.placeOnTop - this.borderHeight + 'px'
+
   }
 }
 
 fn.addEvents = function () {
   var self = this
+
+  if(this.triangle){
+    this.triangle.addEventListener('mouseover', function () {
+      self.show()
+    })
+  }
 
   this.container.addEventListener('mouseover', function () {
     self.show()
@@ -103,6 +164,12 @@ fn.addEvents = function () {
     self.show()
   })
 
+  if(this.triangle){
+    this.triangle.addEventListener('mouseout', function () {
+      self.hide()
+    })
+  }
+
   this.container.addEventListener('mouseout', function () {
     self.hide()
   })
@@ -111,8 +178,10 @@ fn.addEvents = function () {
     self.hide()
   })
 
-  window.addEventListener('resize', this.setPosition.bind(this))
-  window.addEventListener('scroll', this.setPosition.bind(this))
+  window.addEventListener('resize', this.setPopoverPosition.bind(this))
+  window.addEventListener('resize', this.setTrianglePosition.bind(this))
+  window.addEventListener('scroll', this.setPopoverPosition.bind(this))
+  window.addEventListener('scroll', this.setTrianglePosition.bind(this))
 }
 
 fn.show = function () {
@@ -123,7 +192,7 @@ fn.hide = function () {
   this.popover.classList.remove(this.options.effect + '-after')
 }
 
-},{"bloody-offset":2,"lodash/assign":31,"lodash/isElement":39,"small-supplant":46}],2:[function(require,module,exports){
+},{"bloody-offset":2,"insert-after":3,"lodash/assign":32,"lodash/isElement":40,"small-supplant":47}],2:[function(require,module,exports){
 function getScrolled(){
   var top = window.pageYOffset
   if(typeof top == "number") {
@@ -154,6 +223,21 @@ module.exports = function(element){
 }
 
 },{}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.default = function (node, _ref) {
+  var nextSibling = _ref.nextSibling;
+  var parentNode = _ref.parentNode;
+  return parentNode.insertBefore(node, nextSibling);
+};
+
+module.exports = exports['default'];
+
+},{}],4:[function(require,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -176,7 +260,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var baseTimes = require('./_baseTimes'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray'),
@@ -217,7 +301,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":11,"./_isIndex":19,"./isArguments":35,"./isArray":36}],5:[function(require,module,exports){
+},{"./_baseTimes":12,"./_isIndex":20,"./isArguments":36,"./isArray":37}],6:[function(require,module,exports){
 var baseAssignValue = require('./_baseAssignValue'),
     eq = require('./eq');
 
@@ -247,7 +331,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":6,"./eq":33}],6:[function(require,module,exports){
+},{"./_baseAssignValue":7,"./eq":34}],7:[function(require,module,exports){
 /** Built-in value references. */
 var defineProperty = Object.defineProperty;
 
@@ -275,7 +359,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isMasked = require('./_isMasked'),
     isObject = require('./isObject'),
@@ -324,7 +408,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":21,"./_toSource":30,"./isFunction":40,"./isObject":42}],8:[function(require,module,exports){
+},{"./_isMasked":22,"./_toSource":31,"./isFunction":41,"./isObject":43}],9:[function(require,module,exports){
 var isPrototype = require('./_isPrototype'),
     nativeKeys = require('./_nativeKeys');
 
@@ -356,7 +440,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":22,"./_nativeKeys":24}],9:[function(require,module,exports){
+},{"./_isPrototype":23,"./_nativeKeys":25}],10:[function(require,module,exports){
 var identity = require('./identity'),
     overRest = require('./_overRest'),
     setToString = require('./_setToString');
@@ -375,7 +459,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":26,"./_setToString":28,"./identity":34}],10:[function(require,module,exports){
+},{"./_overRest":27,"./_setToString":29,"./identity":35}],11:[function(require,module,exports){
 var constant = require('./constant'),
     identity = require('./identity'),
     nativeDefineProperty = require('./_nativeDefineProperty');
@@ -399,7 +483,7 @@ var baseSetToString = !nativeDefineProperty ? identity : function(func, string) 
 
 module.exports = baseSetToString;
 
-},{"./_nativeDefineProperty":23,"./constant":32,"./identity":34}],11:[function(require,module,exports){
+},{"./_nativeDefineProperty":24,"./constant":33,"./identity":35}],12:[function(require,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -421,7 +505,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     baseAssignValue = require('./_baseAssignValue');
 
@@ -463,7 +547,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":5,"./_baseAssignValue":6}],13:[function(require,module,exports){
+},{"./_assignValue":6,"./_baseAssignValue":7}],14:[function(require,module,exports){
 var root = require('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -471,7 +555,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":27}],14:[function(require,module,exports){
+},{"./_root":28}],15:[function(require,module,exports){
 var baseRest = require('./_baseRest'),
     isIterateeCall = require('./_isIterateeCall');
 
@@ -510,7 +594,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":9,"./_isIterateeCall":20}],15:[function(require,module,exports){
+},{"./_baseRest":10,"./_isIterateeCall":21}],16:[function(require,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -518,7 +602,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var baseIsNative = require('./_baseIsNative'),
     getValue = require('./_getValue');
 
@@ -537,7 +621,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":7,"./_getValue":18}],17:[function(require,module,exports){
+},{"./_baseIsNative":8,"./_getValue":19}],18:[function(require,module,exports){
 var overArg = require('./_overArg');
 
 /** Built-in value references. */
@@ -545,7 +629,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":25}],18:[function(require,module,exports){
+},{"./_overArg":26}],19:[function(require,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -560,7 +644,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -584,7 +668,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var eq = require('./eq'),
     isArrayLike = require('./isArrayLike'),
     isIndex = require('./_isIndex'),
@@ -616,7 +700,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":19,"./eq":33,"./isArrayLike":37,"./isObject":42}],21:[function(require,module,exports){
+},{"./_isIndex":20,"./eq":34,"./isArrayLike":38,"./isObject":43}],22:[function(require,module,exports){
 var coreJsData = require('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -638,7 +722,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":13}],22:[function(require,module,exports){
+},{"./_coreJsData":14}],23:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -658,7 +742,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var getNative = require('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -666,7 +750,7 @@ var nativeDefineProperty = getNative(Object, 'defineProperty');
 
 module.exports = nativeDefineProperty;
 
-},{"./_getNative":16}],24:[function(require,module,exports){
+},{"./_getNative":17}],25:[function(require,module,exports){
 var overArg = require('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -674,7 +758,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":25}],25:[function(require,module,exports){
+},{"./_overArg":26}],26:[function(require,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -691,7 +775,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var apply = require('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -729,7 +813,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":3}],27:[function(require,module,exports){
+},{"./_apply":4}],28:[function(require,module,exports){
 var freeGlobal = require('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -740,7 +824,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":15}],28:[function(require,module,exports){
+},{"./_freeGlobal":16}],29:[function(require,module,exports){
 var baseSetToString = require('./_baseSetToString'),
     shortOut = require('./_shortOut');
 
@@ -756,7 +840,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":10,"./_shortOut":29}],29:[function(require,module,exports){
+},{"./_baseSetToString":11,"./_shortOut":30}],30:[function(require,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 500,
     HOT_SPAN = 16;
@@ -795,7 +879,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -823,7 +907,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     copyObject = require('./_copyObject'),
     createAssigner = require('./_createAssigner'),
@@ -883,7 +967,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":5,"./_copyObject":12,"./_createAssigner":14,"./_isPrototype":22,"./isArrayLike":37,"./keys":45}],32:[function(require,module,exports){
+},{"./_assignValue":6,"./_copyObject":13,"./_createAssigner":15,"./_isPrototype":23,"./isArrayLike":38,"./keys":46}],33:[function(require,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -911,7 +995,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -950,7 +1034,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -973,7 +1057,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var isArrayLikeObject = require('./isArrayLikeObject');
 
 /** `Object#toString` result references. */
@@ -1021,7 +1105,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{"./isArrayLikeObject":38}],36:[function(require,module,exports){
+},{"./isArrayLikeObject":39}],37:[function(require,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -1049,7 +1133,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isLength = require('./isLength');
 
@@ -1084,7 +1168,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":40,"./isLength":41}],38:[function(require,module,exports){
+},{"./isFunction":41,"./isLength":42}],39:[function(require,module,exports){
 var isArrayLike = require('./isArrayLike'),
     isObjectLike = require('./isObjectLike');
 
@@ -1119,7 +1203,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":37,"./isObjectLike":43}],39:[function(require,module,exports){
+},{"./isArrayLike":38,"./isObjectLike":44}],40:[function(require,module,exports){
 var isObjectLike = require('./isObjectLike'),
     isPlainObject = require('./isPlainObject');
 
@@ -1146,7 +1230,7 @@ function isElement(value) {
 
 module.exports = isElement;
 
-},{"./isObjectLike":43,"./isPlainObject":44}],40:[function(require,module,exports){
+},{"./isObjectLike":44,"./isPlainObject":45}],41:[function(require,module,exports){
 var isObject = require('./isObject');
 
 /** `Object#toString` result references. */
@@ -1189,7 +1273,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./isObject":42}],41:[function(require,module,exports){
+},{"./isObject":43}],42:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -1226,7 +1310,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -1259,7 +1343,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -1290,7 +1374,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var getPrototype = require('./_getPrototype'),
     isObjectLike = require('./isObjectLike');
 
@@ -1360,7 +1444,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_getPrototype":17,"./isObjectLike":43}],45:[function(require,module,exports){
+},{"./_getPrototype":18,"./isObjectLike":44}],46:[function(require,module,exports){
 var arrayLikeKeys = require('./_arrayLikeKeys'),
     baseKeys = require('./_baseKeys'),
     isArrayLike = require('./isArrayLike');
@@ -1399,7 +1483,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":4,"./_baseKeys":8,"./isArrayLike":37}],46:[function(require,module,exports){
+},{"./_arrayLikeKeys":5,"./_baseKeys":9,"./isArrayLike":38}],47:[function(require,module,exports){
 'use strict'
 
 module.exports = supplant

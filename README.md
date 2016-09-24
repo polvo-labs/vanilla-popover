@@ -42,3 +42,19 @@ var popover = new VanillaPopover('[data-popover]', {})
 - Options:
   - `show`: it will only show
   - `fade`: it will fade
+
+### triangle
+
+- Type: `Boolean`
+- Default: `true`
+
+### triangleOffset
+
+- Type: `Number`
+- Default: `15`
+
+### triangleColor
+
+- Type: `String`
+- Default: `#000`
+  - RGB are preferred

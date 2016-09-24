@@ -14,7 +14,7 @@ Popover.defaults = {
   content: '',
   template: '<div class="{customClass} {effect}-before">{content}</div>',
   effect: 'basic',
-  triangle: true,
+  triangle: false,
   triangleOffset: 15,
   triangleColor: '#000'
 }
@@ -111,7 +111,7 @@ fn.setPopoverPosition = function () {
 }
 
 fn.setTrianglePosition = function () {
-  if(!this.options.triangle) return
+  if (!this.options.triangle) return
 
   var chosenSpace = this.options.triangleOffset
   var axis = this.getAxis()
@@ -134,7 +134,6 @@ fn.setTrianglePosition = function () {
 
     this.triangle.style.top = this.trianglePosition + 'px'
     this.popover.style.top = this.placeOnBottom + this.borderHeight + 'px'
-
   } else {
     this.triangle.style.borderBottomColor = 'transparent'
     this.triangle.style.borderTopColor = this.options.triangleColor
@@ -143,14 +142,13 @@ fn.setTrianglePosition = function () {
 
     this.triangle.style.top = this.trianglePosition + this.popoverOffset.height + 'px'
     this.popover.style.top = this.placeOnTop - this.borderHeight + 'px'
-
   }
 }
 
 fn.addEvents = function () {
   var self = this
 
-  if(this.triangle){
+  if (this.triangle) {
     this.triangle.addEventListener('mouseover', function () {
       self.show()
     })
@@ -164,7 +162,7 @@ fn.addEvents = function () {
     self.show()
   })
 
-  if(this.triangle){
+  if (this.triangle) {
     this.triangle.addEventListener('mouseout', function () {
       self.hide()
     })

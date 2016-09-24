@@ -13,7 +13,7 @@ Popover.defaults = {
   content: '',
   template: '<div class="{customClass} {effect}-before">{content}</div>',
   effect: 'basic',
-  triangle: true,
+  triangle: false,
   triangleOffset: 15,
   triangleColor: '#000'
 }

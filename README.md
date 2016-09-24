@@ -2,6 +2,8 @@
 
 Small vanilla module for popovers.
 
+[See live demo](https://polvo-labs.github.io/vanilla-popover/index.html)
+
 ## Installation
 
 `npm install polvo-labs/vanilla-popover --save`
@@ -46,12 +48,12 @@ var popover = new VanillaPopover('[data-popover]', {})
 ### triangle
 
 - Type: `Boolean`
-- Default: `true`
+- Default: `false`
 
 ### triangleOffset
 
 - Type: `Number`
-- Default: `15`
+- Default: `0`
 
 ### triangleColor
 

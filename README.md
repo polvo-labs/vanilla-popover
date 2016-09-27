@@ -50,6 +50,11 @@ var popover = new VanillaPopover('[data-popover]', {})
 - Type: `Boolean`
 - Default: `false`
 
+### triangleSize
+
+- Type: `Number`
+- Default: `10`
+
 ### triangleOffset
 
 - Type: `Number`
@@ -58,5 +63,5 @@ var popover = new VanillaPopover('[data-popover]', {})
 ### triangleColor
 
 - Type: `String`
-- Default: `#000`
+- Default: `#696969`
   - RGB are preferred

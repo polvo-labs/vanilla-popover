@@ -2,20 +2,20 @@ var offset = require('bloody-offset')
 var assign = require('lodash/assign')
 var isElement = require('lodash/isElement')
 var supplant = require('small-supplant')
-var insertAfter = require('insert-after')
 
 supplant.delimiters = ['{', '}']
 
 module.exports = Popover
 
 Popover.defaults = {
-  customClass: 'vanilla-popover',
+  customClass: 'popover-wrapper',
   content: '',
-  template: '<div class="{customClass} {effect}-before">{content}</div>',
+  template: '<div class="{customClass} {effect}-before"><div class="popover-content">{content}</div></div>',
   effect: 'basic',
   triangle: false,
+  triangleSize: 10,
   triangleOffset: 15,
-  triangleColor: '#000'
+  triangleColor: '#696969'
 }
 
 function Popover (container, options) {
@@ -32,10 +32,12 @@ function Popover (container, options) {
   this.options.content = this.getContent()
 
   this.createPopover()
-  this.createTriangle()
-
   this.setPopoverPosition()
-  this.setTrianglePosition()
+
+  if (this.options.triangle) {
+    this.createTriangle()
+    this.setTrianglePosition()
+  }
 
   this.addEvents()
 }
@@ -65,11 +67,15 @@ fn.createPopover = function () {
 }
 
 fn.createTriangle = function () {
-  if (!this.options.triangle) return
   var span = document.createElement('span')
   this.triangle = span
-  this.triangle.classList.add('vanilla-popover-triangle')
-  insertAfter(this.triangle, this.popover)
+  this.triangle.classList.add('popover-triangle')
+  this.triangleSize = this.options.triangleSize
+
+  this.triangle.style.borderTopWidth = this.triangleSize + 'px'
+  this.triangle.style.borderRightWidth = this.triangleSize + 'px'
+  this.triangle.style.borderLeftWidth = this.triangleSize + 'px'
+  this.triangle.style.borderBottomWidth = this.triangleSize + 'px'
 }
 
 fn.calculatePopoverPosition = function () {
@@ -92,9 +98,9 @@ fn.getAxis = function () {
 }
 
 fn.setPopoverPosition = function () {
-  var axis = this.getAxis()
-
   this.calculatePopoverPosition()
+
+  var axis = this.getAxis()
 
   if (this.placeOnLeft < axis.x) {
     this.popover.style.left = this.placeOnLeft + 'px'
@@ -110,48 +116,32 @@ fn.setPopoverPosition = function () {
 }
 
 fn.setTrianglePosition = function () {
-  if (!this.options.triangle) return
-
-  var chosenSpace = this.options.triangleOffset
   var axis = this.getAxis()
-  this.calculatePopoverPosition()
 
-  this.borderHeight = window.getComputedStyle(this.triangle).borderTopWidth
-  this.borderWidth = this.borderHeight = parseInt(this.borderHeight)
+  var popoverContent = this.popover.querySelector('.popover-content')
+  popoverContent.style.height = 'calc(100% - ' + this.triangleSize + 'px)'
 
   if (this.placeOnLeft < axis.x) {
-    this.triangle.style.left = this.placeOnLeft + chosenSpace + 'px'
+    this.triangle.style.float = 'left'
+    this.triangle.style.marginLeft = this.options.triangleOffset + 'px'
   } else {
-    this.triangle.style.left = ((this.placeOnLeft + this.containerOffset.width) - (this.borderWidth * 2) - chosenSpace) + 'px'
+    this.triangle.style.float = 'right'
+    this.triangle.style.marginRight = this.options.triangleOffset + 'px'
   }
 
   if (axis.y > this.targetTop) {
-    this.triangle.style.borderTopColor = 'transparent'
+    this.popover.insertBefore(this.triangle, this.popover.childNodes[0])
     this.triangle.style.borderBottomColor = this.options.triangleColor
-
-    this.trianglePosition = this.placeOnBottom - this.borderHeight
-
-    this.triangle.style.top = this.trianglePosition + 'px'
-    this.popover.style.top = this.placeOnBottom + this.borderHeight + 'px'
+    this.triangle.style.borderTopColor = 'transparent'
   } else {
-    this.triangle.style.borderBottomColor = 'transparent'
+    this.popover.appendChild(this.triangle)
     this.triangle.style.borderTopColor = this.options.triangleColor
-
-    this.trianglePosition = this.placeOnTop - this.borderHeight
-
-    this.triangle.style.top = this.trianglePosition + this.popoverOffset.height + 'px'
-    this.popover.style.top = this.placeOnTop - this.borderHeight + 'px'
+    this.triangle.style.borderBottomColor = 'transparent'
   }
 }
 
 fn.addEvents = function () {
   var self = this
-
-  if (this.triangle) {
-    this.triangle.addEventListener('mouseover', function () {
-      self.show()
-    })
-  }
 
   this.container.addEventListener('mouseover', function () {
     self.show()
@@ -160,12 +150,6 @@ fn.addEvents = function () {
   this.popover.addEventListener('mouseover', function () {
     self.show()
   })
-
-  if (this.triangle) {
-    this.triangle.addEventListener('mouseout', function () {
-      self.hide()
-    })
-  }
 
   this.container.addEventListener('mouseout', function () {
     self.hide()
@@ -176,9 +160,7 @@ fn.addEvents = function () {
   })
 
   window.addEventListener('resize', this.setPopoverPosition.bind(this))
-  window.addEventListener('resize', this.setTrianglePosition.bind(this))
   window.addEventListener('scroll', this.setPopoverPosition.bind(this))
-  window.addEventListener('scroll', this.setTrianglePosition.bind(this))
 }
 
 fn.show = function () {

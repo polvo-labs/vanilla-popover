@@ -1,62 +1,59 @@
-/* Examples */
+/* Theme */
 
-.row {
-  position: fixed;
-  width: 300px;
+.popover-preview {
+  font-family: 'Scope One', serif;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: justify;
+  font-size: 1.2em;
 }
 
-.top-left {
-  top: 30px;
-  left: 30px;
+.popover-preview h1{
+  text-align: center;
 }
 
-.top-right {
-  top: 30px;
-  right: 30px;
-  text-align: right;
+[data-popover]{
+  text-decoration: underline;
+  color: #295ba0;
 }
 
-.bottom-left {
-  bottom: 30px;
-  left: 30px;
+[data-popover]:after{
+  content: ' [?]';
 }
 
-.bottom-right {
-  bottom: 30px;
-  right: 30px;
-  text-align: right;
-}
+/* Popover Needed to work */
 
-/* Needed to work */
-
-.vanilla-popover {
-  box-sizing: border-box;
+.popover-wrapper {
   position: fixed;
   max-width: none;
   width: 200px;
-  height: 100px;
-  overflow: auto;
-  padding: 10px;
-  border: 1px solid lightgray;
-  border-radius: 2px;
-  background: #fff;
+  height: 80px;
+  overflow: hidden;
 }
 
-.vanilla-popover img {
+.popover-content{
+  box-sizing: border-box;
+  padding: 10px;
+  background-color: #696969;
+  color: #fff;
+  border-radius: 2px;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.popover-wrapper img {
   display: block;
   margin: 10px auto;
   max-width: 100%;
 }
 
-.vanilla-popover-triangle{
-  position: fixed;
+.popover-triangle{
+  box-sizing: border-box;
   height: 0;
   width: 0;
   display: block;
-  border-top-width: 10px;
-  border-right-width: 10px;
-  border-bottom-width: 10px;
-  border-left-width: 10px;
   border-style: solid;
   border-right-color: transparent;
   border-left-color: transparent;
@@ -64,23 +61,21 @@
 
 /* Animations */
 
-.vanilla-popover.basic-before,
-.vanilla-popover.basic-before + .vanilla-popover-triangle {
+.popover-wrapper.basic-before {
   visibility: hidden;
 }
 
-.vanilla-popover.basic-after,
-.vanilla-popover.basic-after + .vanilla-popover-triangle {
+.popover-wrapper.basic-after{
   visibility: visible;
 }
 
-.vanilla-popover.fade-before {
+.popover-wrapper.fade-before {
   opacity: 0;
   visibility: hidden;
   transition: visibility 0s, all 0.4s;
 }
 
-.vanilla-popover.fade-after {
+.popover-wrapper.fade-after {
   opacity: 1;
   visibility: visible;
 }
